@@ -1,0 +1,43 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pester:
+    name: Pester (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ windows-latest, ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: ./build/Install-Dependencies.ps1 -Scope AllUsers
+
+    - name: Install dependencies (Linux/macOS)
+      if: runner.os != 'Windows'
+      run: sudo pwsh -NoProfile -File ./build/Install-Dependencies.ps1 -Scope AllUsers
+
+    - name: Run Pester
+      shell: pwsh
+      run: |
+        $PSVersionTable | Out-String | Write-Information -InformationAction Continue
+        ./build/Invoke-Tests.ps1
+
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}
+        path: testResults.xml
