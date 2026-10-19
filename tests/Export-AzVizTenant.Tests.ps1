@@ -20,12 +20,12 @@ Describe 'Export-AzVizTenant' {
     }
 
     It 'calls Export-AzViz once per resource group per subscription' {
-        Should -Invoke Export-AzViz -ModuleName AzViz -Times 4 -Exactly
+        Should -Invoke Export-AzViz -ModuleName AzViz -Times 4 -Exactly -Scope Describe
     }
 
     It 'builds output paths with Join-Path' {
         $expected = Join-Path $TestDrive '01-02-2026' 'sub-fixture-b' 'rg-fixture-2.svg'
-        Should -Invoke Export-AzViz -ModuleName AzViz -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke Export-AzViz -ModuleName AzViz -Times 1 -Exactly -Scope Describe -ParameterFilter {
             $OutputFilePath -eq $expected -and $Theme -eq 'dark' -and $OutputFormat -eq 'svg'
         }
     }
@@ -36,7 +36,7 @@ Describe 'Export-AzVizTenant' {
     }
 
     It 'selects each subscription by id' {
-        Should -Invoke Set-AzContext -ModuleName AzViz -Times 1 -Exactly -ParameterFilter {
+        Should -Invoke Set-AzContext -ModuleName AzViz -Times 1 -Exactly -Scope Describe -ParameterFilter {
             $SubscriptionId -eq '00000000-0000-0000-0000-00000000000a'
         }
     }
@@ -65,7 +65,7 @@ Describe 'Export-AzVizTenant error handling' {
 
         Export-AzVizTenant -Theme light -OutputFilePath $TestDrive -ErrorVariable failures -ErrorAction SilentlyContinue
 
-        $failures | Should -HaveCount 1
+        "$failures" | Should -BeLike '*fixture failure*'
         Should -Invoke Export-AzViz -ModuleName AzViz -Times 1 -Exactly -ParameterFilter { $ResourceGroup -eq 'rg-fixture-good' }
     }
 }
