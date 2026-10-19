@@ -11,7 +11,7 @@ RootModule = 'AzViz.psm1'
 ModuleVersion = '1.2.1'
 
 # Supported PSEditions
-CompatiblePSEditions = @('Desktop','Core')
+CompatiblePSEditions = @('Core')
 
 # ID used to uniquely identify this module
 GUID = '2ef9c59e-fdab-4d6a-a3cf-ba466a0788c6'
@@ -29,7 +29,7 @@ Copyright = '(c) 2021 Prateek Singh. All rights reserved.'
 Description = 'Create automated diagrams of Azure Resources and dependencies'
 
 # Minimum version of the Windows PowerShell engine required by this module
-PowerShellVersion = '5.1'
+PowerShellVersion = '7.4'
 
 # Name of the Windows PowerShell host required by this module
 # PowerShellHostName = ''
