@@ -70,6 +70,7 @@ Author    : https://www.linkedin.com/in/prateeksingh1590
 #>
 function Export-AzViz {
     [CmdletBinding()]
+    [Alias('AzViz')]
     param (
         # Names of target resource groups 
         [Parameter(ParameterSetName = 'AzLogin', Mandatory = $true, Position = 0)]
@@ -161,66 +162,7 @@ function Export-AzViz {
         # test graphviz installation
 
         $GraphViz = Get-DOTExecutable
-
-        if ( $null -eq $GraphViz ) {
-            Write-Error "'GraphViz' is not installed on this system and is a prerequisites for this module to work. Please download and install from here: https://graphviz.org/download/ and re-run this command." -ErrorAction Stop
-        }
-        else {
-            Write-CustomHost "GraphViz installation path : $GraphViz" -Indentation 1
-        }
-
-        switch ($Theme) {
-            'light' { 
-                $VisualizationGraphColor = 'White'
-                $MainGraphBGColor = 'ivory1'
-                $ResourceGroupGraphColor = 'black'
-                $ResourceGroupGraphBGColor = 'ghostwhite'
-                $VNetGraphColor = 'mintcream'
-                $SubnetGraphBGColor = 'whitesmoke'
-                $SubnetGraphColor = 'black'
-                $GraphFontColor = 'black'
-                $DependencyEdgeColor = 'lightslategrey'
-                $NetworkEdgeColor = 'royalblue2'
-                $EdgeFontColor = 'black'
-                $NodeColor = 'black'
-                $NodeFontColor = 'black'
-                break
-            }
-            'dark' { 
-                $VisualizationGraphColor = 'White'
-                $MainGraphBGColor = 'Black'
-                $ResourceGroupGraphColor = 'white'
-                $ResourceGroupGraphBGColor = 'grey7'
-                $VNetGraphColor = 'white'
-                $VNetGraphBGColor = 'grey15'
-                $SubnetGraphColor = 'white'
-                $SubnetGraphBGColor = 'grey23'
-                $GraphFontColor = 'white'
-                $DependencyEdgeColor = 'lightslategrey'
-                $NetworkEdgeColor = 'royalblue2'
-                $EdgeFontColor = 'white'
-                $NodeColor = 'white'
-                $NodeFontColor = 'white'
-                break
-            }
-            'neon' {
-                $VisualizationGraphColor = 'White'
-                $MainGraphBGColor = 'grey14'
-                $ResourceGroupGraphColor = 'white'
-                $ResourceGroupGraphBGColor = 'midnightblue'
-                $VNetGraphColor = 'white'
-                $VNetGraphBGColor = 'darkslategray'
-                $SubnetGraphColor = 'white'
-                $SubnetGraphBGColor = 'maroon4'
-                $GraphFontColor = 'gold2'
-                $DependencyEdgeColor = 'olivedrab1'
-                $NetworkEdgeColor = 'lightpink2'
-                $EdgeFontColor = 'gold2'
-                $NodeColor = 'gold2'
-                $NodeFontColor = 'gold2'
-                break
-            }
-        }
+        Write-CustomHost "GraphViz installation path : $GraphViz" -Indentation 1
 
         if ($PSBoundParameters.ContainsKey('ResourceGroup')) {
             $TargetType = 'Azure Resource Group'
@@ -230,15 +172,6 @@ function Export-AzViz {
         }
         elseif ($PSBoundParameters.ContainsKey('URL')) {
             $TargetType = 'URL'
-        }
-
-        $rank = @{
-            "Microsoft.Network/publicIPAddresses"     = 1
-            "Microsoft.Network/loadBalancers"         = 2
-            "Microsoft.Network/virtualNetworks"       = 3 
-            "Microsoft.Network/networkSecurityGroups" = 4
-            "Microsoft.Network/networkInterfaces"     = 5
-            "Microsoft.Compute/virtualMachines"       = 6
         }
 
         Write-CustomHost "Configuring Defaults..." -Indentation 0 -AddTime
@@ -265,7 +198,7 @@ function Export-AzViz {
         #region graph-generation
         Write-CustomHost "Starting to generate Azure visualization..." -Indentation 0 -AddTime
     
-        $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Splines $Splines -ExcludeTypes $ExcludeTypes
+        $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Splines $Splines -ExcludeTypes $ExcludeTypes -Theme $Theme
 
         if ($graph) {
             @"
@@ -281,5 +214,3 @@ strict $graph
         $_
     }
 }
-
-Export-ModuleMember Export-AzViz

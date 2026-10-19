@@ -8,10 +8,13 @@ function ConvertTo-DOTLanguage {
         [int] $CategoryDepth = 1,
         [string] $Direction = 'top-to-bottom',
         [string] $Splines = 'spline',
-        [string[]] $ExcludeTypes
+        [string[]] $ExcludeTypes,
+        [ValidateSet('light', 'dark', 'neon')]
+        [string] $Theme = 'light'
     )
     
     begin {
+        $Colors = Get-ThemeColor -Theme $Theme
         switch ($Direction) {
             'left-to-right' { $rankdir = "LR" }
             'top-to-bottom' { $rankdir = "TB" }
@@ -68,8 +71,8 @@ function ConvertTo-DOTLanguage {
                         penwidth = "1";
                         fontname = "Courier New" ;
                         style    = "rounded,dashed";
-                        color    = $VNetGraphColor
-                        bgcolor  = $VNetGraphBGColor
+                        color    = $Colors.VNetGraphColor
+                        bgcolor  = $Colors.VNetGraphBGColor
                     }
     
                     # generating dot language for virtual networks and then iterating all the subnets
@@ -91,8 +94,8 @@ function ConvertTo-DOTLanguage {
                                 penwidth = "1";
                                 fontname = "Courier New" ;
                                 style    = "rounded,dashed";
-                                color    = $SubnetGraphColor
-                                bgcolor  = $SubnetGraphBGColor; 
+                                color    = $Colors.SubnetGraphColor
+                                bgcolor  = $Colors.SubnetGraphBGColor; 
                             }
     
                             # generating dot language for subnets inside virtual networks    
@@ -148,7 +151,7 @@ function ConvertTo-DOTLanguage {
                                             # label     = 'dependsOn'
                                             penwidth  = "1"
                                             fontname  = "Courier New"
-                                            color     = $DependencyEdgeColor
+                                            color     = $Colors.DependencyEdgeColor
                                         }
     
                         if ($LabelVerbosity -eq 1) {
@@ -168,7 +171,7 @@ function ConvertTo-DOTLanguage {
                             style     = 'solid';
                             penwidth  = "1"
                             fontname  = "Courier New"
-                            color     = $NetworkEdgeColor
+                            color     = $Colors.NetworkEdgeColor
                         }
     
                         if ($LabelVerbosity -eq 1) {
@@ -236,8 +239,8 @@ function ConvertTo-DOTLanguage {
                     penwidth = "1";
                     fontname = "Courier New" ;
                     style    = "rounded, dashed";
-                    color    = $ResourceGroupGraphColor;
-                    bgcolor  = $ResourceGroupGraphBGColor;
+                    color    = $Colors.ResourceGroupGraphColor;
+                    bgcolor  = $Colors.ResourceGroupGraphBGColor;
                     fontsize = "9"; 
                 }
 
@@ -256,8 +259,8 @@ function ConvertTo-DOTLanguage {
         $Legend += '        label = "Legend\n\n";'
         $Legend += '        rank = 9999999999999'
         $Legend += '        clusterrank=local'
-        $Legend += '        bgcolor = {0}' -f $MainGraphBGColor
-        $Legend += '        fontcolor = {0}' -f $EdgeFontColor
+        $Legend += '        bgcolor = {0}' -f $Colors.MainGraphBGColor
+        $Legend += '        fontcolor = {0}' -f $Colors.EdgeFontColor
         $Legend += '        fontsize = 11'
         $Legend += '        node [shape=point]'
         $Legend += '        {'
@@ -267,8 +270,8 @@ function ConvertTo-DOTLanguage {
         $Legend += '            p0 [style = invis];'
         $Legend += '            p1 [style = invis];'
         $Legend += '        }'
-        $Legend += '        d0 -> d1 [arrowhead="normal";style="dashed";label="Resource\nDependency";color="{0}";fontname="Courier New";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $DependencyEdgeColor, $EdgeFontColor
-        $Legend += '        p0 -> p1 [style="solid";fontname="Courier New";label="Network\nAssociation";arrowhead="normal";color="{0}";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $NetworkEdgeColor, $EdgeFontColor
+        $Legend += '        d0 -> d1 [arrowhead="normal";style="dashed";label="Resource\nDependency";color="{0}";fontname="Courier New";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $Colors.DependencyEdgeColor, $Colors.EdgeFontColor
+        $Legend += '        p0 -> p1 [style="solid";fontname="Courier New";label="Network\nAssociation";arrowhead="normal";color="{0}";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $Colors.NetworkEdgeColor, $Colors.EdgeFontColor
         $Legend += '    }'
 
 
@@ -279,11 +282,11 @@ function ConvertTo-DOTLanguage {
                 rankdir   = $rankdir
                 overlap   = 'false'
                 splines   = $Splines 
-                color     = $VisualizationGraphColor
-                bgcolor   = $VisualizationGraphColor
+                color     = $Colors.VisualizationGraphColor
+                bgcolor   = $Colors.VisualizationGraphColor
                 penwidth  = "1"
                 fontname  = "Courier New" 
-                fontcolor = $GraphFontColor
+                fontcolor = $Colors.GraphFontColor
                 fontsize  = "9"
             }
 
@@ -294,13 +297,13 @@ function ConvertTo-DOTLanguage {
                     label    = $MainGraphLabel
                     fontsize = "9"
                     style    = "rounded,solid"
-                    bgcolor  = $MainGraphBGColor
+                    bgcolor  = $Colors.MainGraphBGColor
                 }
 
                 SubGraph -Name 'main' -Attributes $MainGraphAttributes -ScriptBlock {
             
-                    edge @{color = $EdgeColor; fontcolor = $EdgeFontColor; fontsize = "11" }
-                    node @{color = $NodeColor ; fontcolor = $NodeFontColor; fontsize = "11" }
+                    edge @{color = $Colors.EdgeColor; fontcolor = $Colors.EdgeFontColor; fontsize = "11" }
+                    node @{color = $Colors.NodeColor ; fontcolor = $Colors.NodeFontColor; fontsize = "11" }
                 
                     $subgraphs
                 }
