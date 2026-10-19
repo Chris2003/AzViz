@@ -211,6 +211,6 @@ strict $graph
         #endregion graph-generation
     }
     catch {
-        $_
+        $PSCmdlet.ThrowTerminatingError($_)
     }
 }
