@@ -1,0 +1,49 @@
+name: Publish
+
+# Publishing happens only from a published GitHub Release, and only after the
+# protected 'psgallery' environment's required reviewers approve the job.
+on:
+  release:
+    types: [ published ]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to PowerShell Gallery
+    runs-on: ubuntu-latest
+    environment:
+      name: psgallery
+      url: https://www.powershellgallery.com/packages/AzViz
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Install dependencies
+      run: sudo pwsh -NoProfile -File ./build/Install-Dependencies.ps1 -Scope AllUsers
+
+    - name: Run Pester
+      shell: pwsh
+      run: ./build/Invoke-Tests.ps1
+
+    - name: Check release tag matches module version
+      shell: pwsh
+      env:
+        RELEASE_TAG: ${{ github.event.release.tag_name }}
+      run: |
+        $Version = (Import-PowerShellDataFile ./AzViz/AzViz.psd1).ModuleVersion
+        if ($env:RELEASE_TAG.TrimStart('v') -ne $Version) {
+          throw "Release tag '$env:RELEASE_TAG' does not match ModuleVersion '$Version'."
+        }
+
+    - name: Dry run
+      shell: pwsh
+      run: ./build/Publish-Module.ps1 -DryRun
+
+    - name: Publish with PSResourceGet
+      shell: pwsh
+      env:
+        PSGALLERY_API_KEY: ${{ secrets.PS_GALLERY_KEY }}
+      run: ./build/Publish-Module.ps1
