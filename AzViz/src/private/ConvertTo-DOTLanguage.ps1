@@ -43,7 +43,7 @@ function ConvertTo-DOTLanguage {
         $Counter = 0
         $subgraphs = foreach ($Target in $GraphObjects) {
             $Counter = $Counter + 1              
-            Write-CustomHost "Plotting sub-graph for $($Target.Type): `"$($Target.Name)`"" -Indentation 1 -color Green -AddTime
+            Write-CustomHost "Plotting sub-graph for $($Target.Type): `"$($Target.Name)`"" -Indentation 1 -AddTime
 
             $VNets = Get-AzVirtualNetwork -ResourceGroupName $Target.Name -Verbose:$false
             $NetworkLayout = @()
@@ -200,25 +200,25 @@ function ConvertTo-DOTLanguage {
 
                 if($nodes){
 
-                    Write-CustomHost -String "Creating Nodes" -Indentation 2 -color Green
+                    Write-CustomHost -String "Creating Nodes" -Indentation 2
 
                     $nodes |
                     Select-Object -Unique | 
                     ForEach-Object {
-                        Write-CustomHost -String $($_.split(" ")[0].Replace('"','')) -Indentation 3 -color Green
+                        Write-CustomHost -String $($_.split(" ")[0].Replace('"','')) -Indentation 3
                     } 
                 }
 
                 if($edges){
 
-                    Write-CustomHost -String "Creating Edges" -Indentation 2 -color Green
+                    Write-CustomHost -String "Creating Edges" -Indentation 2
 
                     $edges |
                     Select-Object -Unique | 
                     ForEach-Object {
                         $first, $second = $_.split(" ")[0].Replace('"','').split("->")
                         if($first -and $second){
-                            Write-CustomHost -String "$first -> $second" -Indentation 3 -color Green
+                            Write-CustomHost -String "$first -> $second" -Indentation 3
                         }
                     }
                 }
@@ -246,7 +246,7 @@ function ConvertTo-DOTLanguage {
                     $NodesAndEdges
                 }
             } else {
-                Write-CustomHost -String "No resources found.. re-run the command and try increasing the category depth using -CategoryDepth 2 or -CategoryDepth 3 cmdlet parameters." -Indentation 1 -Color Red -AddTime
+                Write-CustomHost -String "No resources found.. re-run the command and try increasing the category depth using -CategoryDepth 2 or -CategoryDepth 3 cmdlet parameters." -Indentation 1 -AddTime
             }
             #endregion plotting-edges-to-nodes
         }

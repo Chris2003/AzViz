@@ -149,15 +149,14 @@ function Export-AzViz {
 
     try {
 
-        $StartTime =  [datetime]::Now
+        $script:AzVizStartTime = [datetime]::Now
 
         #region defaults
         $ErrorActionPreference = 'stop'
 
-        Get-ASCIIArt             
+        Get-ASCIIArt
 
-        Write-Host ""
-        Write-CustomHost "Testing Graphviz installation..." -Indentation 0 -color Magenta -AddTime
+        Write-CustomHost "Testing Graphviz installation..." -Indentation 0 -AddTime
 
         # test graphviz installation
 
@@ -167,7 +166,7 @@ function Export-AzViz {
             Write-Error "'GraphViz' is not installed on this system and is a prerequisites for this module to work. Please download and install from here: https://graphviz.org/download/ and re-run this command." -ErrorAction Stop
         }
         else {
-            Write-CustomHost "GraphViz installation path : $GraphViz" -Indentation 1 -color Green
+            Write-CustomHost "GraphViz installation path : $GraphViz" -Indentation 1
         }
 
         switch ($Theme) {
@@ -242,16 +241,16 @@ function Export-AzViz {
             "Microsoft.Compute/virtualMachines"       = 6
         }
 
-        Write-CustomHost "Configuring Defaults..." -Indentation 0 -color Magenta -AddTime
-        Write-CustomHost " Target Type            : $TargetType"-Indentation 1 -color Green
-        Write-CustomHost " Output Format          : $OutputFormat"-Indentation 1 -color Green
-        Write-CustomHost " Exluded Resource Types : $($ExcludeTypes.foreach({"`'$_`'"}))"-Indentation 1 -color Green
-        Write-CustomHost " Output File Path       : $OutputFilePath"-Indentation 1 -color Green
-        Write-CustomHost " Label Verbosity        : $LabelVerbosity"-Indentation 1 -color Green
-        Write-CustomHost " Category Depth         : $CategoryDepth"-Indentation 1 -color Green
-        Write-CustomHost " Sub-graph Direction    : $Direction"-Indentation 1 -color Green
-        Write-CustomHost " Theme                  : $Theme"-Indentation 1 -color Green
-        Write-CustomHost " Launch Visualization   : $Show"-Indentation 1 -color Green
+        Write-CustomHost "Configuring Defaults..." -Indentation 0 -AddTime
+        Write-CustomHost " Target Type            : $TargetType"-Indentation 1
+        Write-CustomHost " Output Format          : $OutputFormat"-Indentation 1
+        Write-CustomHost " Exluded Resource Types : $($ExcludeTypes.foreach({"`'$_`'"}))"-Indentation 1
+        Write-CustomHost " Output File Path       : $OutputFilePath"-Indentation 1
+        Write-CustomHost " Label Verbosity        : $LabelVerbosity"-Indentation 1
+        Write-CustomHost " Category Depth         : $CategoryDepth"-Indentation 1
+        Write-CustomHost " Sub-graph Direction    : $Direction"-Indentation 1
+        Write-CustomHost " Theme                  : $Theme"-Indentation 1
+        Write-CustomHost " Launch Visualization   : $Show"-Indentation 1
         
         switch ($TargetType) {
             'Azure Resource Group' { $Targets = $ResourceGroup }
@@ -259,12 +258,12 @@ function Export-AzViz {
             'Url' { $Targets = $url }
         }
           
-        Write-CustomHost "Target ${TargetType}s... " -Indentation 0 -color Magenta -AddTime
-        $Targets.ForEach( { Write-CustomHost $_ -Indentation 1 -color Green } ) 
+        Write-CustomHost "Target ${TargetType}s... " -Indentation 0 -AddTime
+        $Targets.ForEach( { Write-CustomHost $_ -Indentation 1 } ) 
         #endregion defaults
 
         #region graph-generation
-        Write-CustomHost "Starting to generate Azure visualization..." -Indentation 0 -color Magenta -AddTime
+        Write-CustomHost "Starting to generate Azure visualization..." -Indentation 0 -AddTime
     
         $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Splines $Splines -ExcludeTypes $ExcludeTypes
 
@@ -273,8 +272,8 @@ function Export-AzViz {
 strict $graph
 "@ | Export-PSGraph -GraphVizPath $GraphViz.FullName -ShowGraph:$Show -OutputFormat $OutputFormat -DestinationPath $OutputFilePath -OutVariable output |
             Out-Null
-            Write-CustomHost "Visualization exported to path: $($output.fullname)" -Indentation 0 -color Magenta -AddTime
-            Write-CustomHost "Finished Azure visualization." -Indentation 0 -color Magenta -AddTime
+            Write-CustomHost "Visualization exported to path: $($output.fullname)" -Indentation 0 -AddTime
+            Write-CustomHost "Finished Azure visualization." -Indentation 0 -AddTime
         }
         #endregion graph-generation
     }

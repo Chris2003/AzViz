@@ -21,17 +21,5 @@ Function Get-ASCIIArt {
    $bl$mid$br  $bl$mid$br$bl$mid$mid$mid$mid$mid$mid$br  $bl$mid$mid$mid$br  $bl$mid$br$bl$mid$mid$mid$mid$mid$mid$br  
 "@
 
-    $ASCIIArt.ToCharArray().foreach({
-        if($_ -eq $b){
-            Write-Host $_ -ForegroundColor Yellow -NoNewline
-        }
-        elseif($_ -in $($mid, $full, $tl, $tr, $bl, $br)){
-            Write-Host $_ -ForegroundColor Gray -NoNewline
-        }
-        else{
-            Write-Host $_ -ForegroundColor Gray -NoNewline
-        }
-    })
-
-
+    Write-Information -MessageData $ASCIIArt -Tags 'AzViz'
 }
