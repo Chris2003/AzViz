@@ -20,9 +20,7 @@ function ConvertTo-DOTLanguage {
     
     process {
 
-        if (!(Test-AzLogin)) {
-            break
-        }
+        $null = Test-AzLogin
         
         $SpecialChars = '() []{}&-.'
         $GraphObjects = @()
