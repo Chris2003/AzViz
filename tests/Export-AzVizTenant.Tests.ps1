@@ -49,3 +49,23 @@ Describe 'Export-AzVizTenant' {
         { Get-TenantDiagrams -Theme light -OutputFilePath $TestDrive } | Should -Not -Throw
     }
 }
+
+Describe 'Export-AzVizTenant error handling' {
+    It 'continues with the next resource group when one export fails' {
+        Mock Get-AzSubscription -ModuleName AzViz {
+            [pscustomobject]@{ Name = 'sub-fixture-a'; Id = '00000000-0000-0000-0000-00000000000a' }
+        }
+        Mock Set-AzContext -ModuleName AzViz { }
+        Mock Get-AzResourceGroup -ModuleName AzViz {
+            [pscustomobject]@{ ResourceGroupName = 'rg-fixture-bad' }
+            [pscustomobject]@{ ResourceGroupName = 'rg-fixture-good' }
+        }
+        Mock Export-AzViz -ModuleName AzViz { throw 'fixture failure' } -ParameterFilter { $ResourceGroup -eq 'rg-fixture-bad' }
+        Mock Export-AzViz -ModuleName AzViz { }
+
+        Export-AzVizTenant -Theme light -OutputFilePath $TestDrive -ErrorVariable failures -ErrorAction SilentlyContinue
+
+        $failures | Should -HaveCount 1
+        Should -Invoke Export-AzViz -ModuleName AzViz -Times 1 -Exactly -ParameterFilter { $ResourceGroup -eq 'rg-fixture-good' }
+    }
+}
