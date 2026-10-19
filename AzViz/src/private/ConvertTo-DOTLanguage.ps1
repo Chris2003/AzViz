@@ -64,7 +64,7 @@ function ConvertTo-DOTLanguage {
                     $VNetCounter = $VNetCounter + 1
 
                     $VNetLabel = Get-ImageLabel -Type "Microsoft.Network/virtualNetworks" -Row1 "$($VNet.Name)" -Row2 "$([string]$VNet.AddressSpace.AddressPrefixes)"
-                    $VNetSubGraphName = Remove-SpecialChars -String $VNet.Name -SpecialChars $SpecialChars
+                    $VNetSubGraphName = Remove-SpecialChar -String $VNet.Name -SpecialChars $SpecialChars
                     $VNetSubGraphAttributes = @{
                         label    = $VNetLabel;
                         labelloc = 't';
@@ -87,7 +87,7 @@ function ConvertTo-DOTLanguage {
                         foreach ($subnet in $Subnets) {
     
                             $SubnetLabel = Get-ImageLabel -Type "Subnets" -Row1 "$($Subnet.Name)" -Row2 "$([string]$Subnet.AddressPrefix)"
-                            $SubnetSubGraphName = Remove-SpecialChars -String $Subnet.Name -SpecialChars $SpecialChars
+                            $SubnetSubGraphName = Remove-SpecialChar -String $Subnet.Name -SpecialChars $SpecialChars
                             $SubnetSubGraphAttributes = @{
                                 label    = $SubnetLabel;
                                 labelloc = 't';
@@ -231,8 +231,8 @@ function ConvertTo-DOTLanguage {
 
             if ($Resources -or $VNets) {
                 $ResourceGroupLocation = (Get-AzResourceGroup -Name $Target.Name -Verbose:$false).Location
-                $ResourceGroupSubGraphName = [string]::Concat($(Remove-SpecialChars -String $Target.Name -SpecialChars $SpecialChars), $Counter)
-                $ResourceGroupSubGraphNameLabel = Get-ImageLabel -Type "ResourceGroups" -Row1 "ResourceGroup: $(Remove-SpecialChars -String $Target.name -SpecialChars $SpecialChars)" -Row2 "Location: $($ResourceGroupLocation)"
+                $ResourceGroupSubGraphName = [string]::Concat($(Remove-SpecialChar -String $Target.Name -SpecialChars $SpecialChars), $Counter)
+                $ResourceGroupSubGraphNameLabel = Get-ImageLabel -Type "ResourceGroups" -Row1 "ResourceGroup: $(Remove-SpecialChar -String $Target.name -SpecialChars $SpecialChars)" -Row2 "Location: $($ResourceGroupLocation)"
                 $ResourceGroupSubGraphAttributes = @{
                     label    = $ResourceGroupSubGraphNameLabel;
                     labelloc = 't';
@@ -292,7 +292,7 @@ function ConvertTo-DOTLanguage {
 
             $graph = Graph -Name 'Visualization' -Attributes $VisualizationAttributes -ScriptBlock {
                 
-                $MainGraphLabel = Get-ImageLabel -Type "Subscriptions" -Row1 "Subscription: $(Remove-SpecialChars -String $Subscription.name -SpecialChars $SpecialChars)" -Row2 "Id: $($Subscription.Id)"
+                $MainGraphLabel = Get-ImageLabel -Type "Subscriptions" -Row1 "Subscription: $(Remove-SpecialChar -String $Subscription.name -SpecialChars $SpecialChars)" -Row2 "Id: $($Subscription.Id)"
                 $MainGraphAttributes = @{
                     label    = $MainGraphLabel
                     fontsize = "9"

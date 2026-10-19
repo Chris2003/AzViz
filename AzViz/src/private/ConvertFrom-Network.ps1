@@ -77,7 +77,7 @@ function ConvertFrom-Network {
                               @{n = 'fromcateg'; e = { (Get-AzResource -ResourceId $_.id -ea SilentlyContinue -Verbose:$false).ResourceType } },
                               Associations,
                               @{n = 'to'; e = { ($_.AssociationText | ConvertFrom-Json) | Select-Object name, AssociationType, resourceID } } |
-                Select-Object *, @{n='CategDepth';e={$depth=0;try{$depth=$_.fromcateg.split("/").count}catch{};$depth}} | #todo just a hack will write better code later :)
+                Select-Object *, @{n='CategDepth';e={ if ($_.fromcateg) { $_.fromcateg.split("/").count } else { 0 } }} |
                 Where-Object { $_.fromcateg -and ($_.CategDepth -le $($CategoryDepth + 1)) } -ea silentlycontinue |
                 ForEach-Object {
                     if ($_.to) {
