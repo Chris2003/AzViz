@@ -8,10 +8,13 @@ function ConvertTo-DOTLanguage {
         [int] $CategoryDepth = 1,
         [string] $Direction = 'top-to-bottom',
         [string] $Splines = 'spline',
-        [string[]] $ExcludeTypes
+        [string[]] $ExcludeTypes,
+        [ValidateSet('light', 'dark', 'neon')]
+        [string] $Theme = 'light'
     )
     
     begin {
+        $Colors = Get-ThemeColor -Theme $Theme
         switch ($Direction) {
             'left-to-right' { $rankdir = "LR" }
             'top-to-bottom' { $rankdir = "TB" }
@@ -20,9 +23,7 @@ function ConvertTo-DOTLanguage {
     
     process {
 
-        if (!(Test-AzLogin)) {
-            break
-        }
+        $null = Test-AzLogin
         
         $SpecialChars = '() []{}&-.'
         $GraphObjects = @()
@@ -45,7 +46,7 @@ function ConvertTo-DOTLanguage {
         $Counter = 0
         $subgraphs = foreach ($Target in $GraphObjects) {
             $Counter = $Counter + 1              
-            Write-CustomHost "Plotting sub-graph for $($Target.Type): `"$($Target.Name)`"" -Indentation 1 -color Green -AddTime
+            Write-CustomHost "Plotting sub-graph for $($Target.Type): `"$($Target.Name)`"" -Indentation 1 -AddTime
 
             $VNets = Get-AzVirtualNetwork -ResourceGroupName $Target.Name -Verbose:$false
             $NetworkLayout = @()
@@ -63,15 +64,15 @@ function ConvertTo-DOTLanguage {
                     $VNetCounter = $VNetCounter + 1
 
                     $VNetLabel = Get-ImageLabel -Type "Microsoft.Network/virtualNetworks" -Row1 "$($VNet.Name)" -Row2 "$([string]$VNet.AddressSpace.AddressPrefixes)"
-                    $VNetSubGraphName = Remove-SpecialChars -String $VNet.Name -SpecialChars $SpecialChars
+                    $VNetSubGraphName = Remove-SpecialChar -String $VNet.Name -SpecialChars $SpecialChars
                     $VNetSubGraphAttributes = @{
                         label    = $VNetLabel;
                         labelloc = 't';
                         penwidth = "1";
                         fontname = "Courier New" ;
                         style    = "rounded,dashed";
-                        color    = $VNetGraphColor
-                        bgcolor  = $VNetGraphBGColor
+                        color    = $Colors.VNetGraphColor
+                        bgcolor  = $Colors.VNetGraphBGColor
                     }
     
                     # generating dot language for virtual networks and then iterating all the subnets
@@ -86,15 +87,15 @@ function ConvertTo-DOTLanguage {
                         foreach ($subnet in $Subnets) {
     
                             $SubnetLabel = Get-ImageLabel -Type "Subnets" -Row1 "$($Subnet.Name)" -Row2 "$([string]$Subnet.AddressPrefix)"
-                            $SubnetSubGraphName = Remove-SpecialChars -String $Subnet.Name -SpecialChars $SpecialChars
+                            $SubnetSubGraphName = Remove-SpecialChar -String $Subnet.Name -SpecialChars $SpecialChars
                             $SubnetSubGraphAttributes = @{
                                 label    = $SubnetLabel;
                                 labelloc = 't';
                                 penwidth = "1";
                                 fontname = "Courier New" ;
                                 style    = "rounded,dashed";
-                                color    = $SubnetGraphColor
-                                bgcolor  = $SubnetGraphBGColor; 
+                                color    = $Colors.SubnetGraphColor
+                                bgcolor  = $Colors.SubnetGraphBGColor; 
                             }
     
                             # generating dot language for subnets inside virtual networks    
@@ -150,7 +151,7 @@ function ConvertTo-DOTLanguage {
                                             # label     = 'dependsOn'
                                             penwidth  = "1"
                                             fontname  = "Courier New"
-                                            color     = $DependencyEdgeColor
+                                            color     = $Colors.DependencyEdgeColor
                                         }
     
                         if ($LabelVerbosity -eq 1) {
@@ -170,7 +171,7 @@ function ConvertTo-DOTLanguage {
                             style     = 'solid';
                             penwidth  = "1"
                             fontname  = "Courier New"
-                            color     = $NetworkEdgeColor
+                            color     = $Colors.NetworkEdgeColor
                         }
     
                         if ($LabelVerbosity -eq 1) {
@@ -202,25 +203,25 @@ function ConvertTo-DOTLanguage {
 
                 if($nodes){
 
-                    Write-CustomHost -String "Creating Nodes" -Indentation 2 -color Green
+                    Write-CustomHost -String "Creating Nodes" -Indentation 2
 
                     $nodes |
                     Select-Object -Unique | 
                     ForEach-Object {
-                        Write-CustomHost -String $($_.split(" ")[0].Replace('"','')) -Indentation 3 -color Green
+                        Write-CustomHost -String $($_.split(" ")[0].Replace('"','')) -Indentation 3
                     } 
                 }
 
                 if($edges){
 
-                    Write-CustomHost -String "Creating Edges" -Indentation 2 -color Green
+                    Write-CustomHost -String "Creating Edges" -Indentation 2
 
                     $edges |
                     Select-Object -Unique | 
                     ForEach-Object {
                         $first, $second = $_.split(" ")[0].Replace('"','').split("->")
                         if($first -and $second){
-                            Write-CustomHost -String "$first -> $second" -Indentation 3 -color Green
+                            Write-CustomHost -String "$first -> $second" -Indentation 3
                         }
                     }
                 }
@@ -230,16 +231,16 @@ function ConvertTo-DOTLanguage {
 
             if ($Resources -or $VNets) {
                 $ResourceGroupLocation = (Get-AzResourceGroup -Name $Target.Name -Verbose:$false).Location
-                $ResourceGroupSubGraphName = [string]::Concat($(Remove-SpecialChars -String $Target.Name -SpecialChars $SpecialChars), $Counter)
-                $ResourceGroupSubGraphNameLabel = Get-ImageLabel -Type "ResourceGroups" -Row1 "ResourceGroup: $(Remove-SpecialChars -String $Target.name -SpecialChars $SpecialChars)" -Row2 "Location: $($ResourceGroupLocation)"
+                $ResourceGroupSubGraphName = [string]::Concat($(Remove-SpecialChar -String $Target.Name -SpecialChars $SpecialChars), $Counter)
+                $ResourceGroupSubGraphNameLabel = Get-ImageLabel -Type "ResourceGroups" -Row1 "ResourceGroup: $(Remove-SpecialChar -String $Target.name -SpecialChars $SpecialChars)" -Row2 "Location: $($ResourceGroupLocation)"
                 $ResourceGroupSubGraphAttributes = @{
                     label    = $ResourceGroupSubGraphNameLabel;
                     labelloc = 't';
                     penwidth = "1";
                     fontname = "Courier New" ;
                     style    = "rounded, dashed";
-                    color    = $ResourceGroupGraphColor;
-                    bgcolor  = $ResourceGroupGraphBGColor;
+                    color    = $Colors.ResourceGroupGraphColor;
+                    bgcolor  = $Colors.ResourceGroupGraphBGColor;
                     fontsize = "9"; 
                 }
 
@@ -248,7 +249,7 @@ function ConvertTo-DOTLanguage {
                     $NodesAndEdges
                 }
             } else {
-                Write-CustomHost -String "No resources found.. re-run the command and try increasing the category depth using -CategoryDepth 2 or -CategoryDepth 3 cmdlet parameters." -Indentation 1 -Color Red -AddTime
+                Write-CustomHost -String "No resources found.. re-run the command and try increasing the category depth using -CategoryDepth 2 or -CategoryDepth 3 cmdlet parameters." -Indentation 1 -AddTime
             }
             #endregion plotting-edges-to-nodes
         }
@@ -258,8 +259,8 @@ function ConvertTo-DOTLanguage {
         $Legend += '        label = "Legend\n\n";'
         $Legend += '        rank = 9999999999999'
         $Legend += '        clusterrank=local'
-        $Legend += '        bgcolor = {0}' -f $MainGraphBGColor
-        $Legend += '        fontcolor = {0}' -f $EdgeFontColor
+        $Legend += '        bgcolor = {0}' -f $Colors.MainGraphBGColor
+        $Legend += '        fontcolor = {0}' -f $Colors.EdgeFontColor
         $Legend += '        fontsize = 11'
         $Legend += '        node [shape=point]'
         $Legend += '        {'
@@ -269,8 +270,8 @@ function ConvertTo-DOTLanguage {
         $Legend += '            p0 [style = invis];'
         $Legend += '            p1 [style = invis];'
         $Legend += '        }'
-        $Legend += '        d0 -> d1 [arrowhead="normal";style="dashed";label="Resource\nDependency";color="{0}";fontname="Courier New";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $DependencyEdgeColor, $EdgeFontColor
-        $Legend += '        p0 -> p1 [style="solid";fontname="Courier New";label="Network\nAssociation";arrowhead="normal";color="{0}";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $NetworkEdgeColor, $EdgeFontColor
+        $Legend += '        d0 -> d1 [arrowhead="normal";style="dashed";label="Resource\nDependency";color="{0}";fontname="Courier New";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $Colors.DependencyEdgeColor, $Colors.EdgeFontColor
+        $Legend += '        p0 -> p1 [style="solid";fontname="Courier New";label="Network\nAssociation";arrowhead="normal";color="{0}";penwidth="1";fontsize="9";fontcolor="{1}"]' -f $Colors.NetworkEdgeColor, $Colors.EdgeFontColor
         $Legend += '    }'
 
 
@@ -281,28 +282,28 @@ function ConvertTo-DOTLanguage {
                 rankdir   = $rankdir
                 overlap   = 'false'
                 splines   = $Splines 
-                color     = $VisualizationGraphColor
-                bgcolor   = $VisualizationGraphColor
+                color     = $Colors.VisualizationGraphColor
+                bgcolor   = $Colors.VisualizationGraphColor
                 penwidth  = "1"
                 fontname  = "Courier New" 
-                fontcolor = $GraphFontColor
+                fontcolor = $Colors.GraphFontColor
                 fontsize  = "9"
             }
 
             $graph = Graph -Name 'Visualization' -Attributes $VisualizationAttributes -ScriptBlock {
                 
-                $MainGraphLabel = Get-ImageLabel -Type "Subscriptions" -Row1 "Subscription: $(Remove-SpecialChars -String $Subscription.name -SpecialChars $SpecialChars)" -Row2 "Id: $($Subscription.Id)"
+                $MainGraphLabel = Get-ImageLabel -Type "Subscriptions" -Row1 "Subscription: $(Remove-SpecialChar -String $Subscription.name -SpecialChars $SpecialChars)" -Row2 "Id: $($Subscription.Id)"
                 $MainGraphAttributes = @{
                     label    = $MainGraphLabel
                     fontsize = "9"
                     style    = "rounded,solid"
-                    bgcolor  = $MainGraphBGColor
+                    bgcolor  = $Colors.MainGraphBGColor
                 }
 
                 SubGraph -Name 'main' -Attributes $MainGraphAttributes -ScriptBlock {
             
-                    edge @{color = $EdgeColor; fontcolor = $EdgeFontColor; fontsize = "11" }
-                    node @{color = $NodeColor ; fontcolor = $NodeFontColor; fontsize = "11" }
+                    edge @{color = $Colors.EdgeColor; fontcolor = $Colors.EdgeFontColor; fontsize = "11" }
+                    node @{color = $Colors.NodeColor ; fontcolor = $Colors.NodeFontColor; fontsize = "11" }
                 
                     $subgraphs
                 }
@@ -326,26 +327,13 @@ function ConvertTo-DOTLanguage {
 
             # to indent and validate the dot language generated by powershell
             $GraphViz = Get-DOTExecutable
-
-            if ( $null -eq $GraphViz ) {
-                Write-Error "'GraphViz' is not installed on this system and is a prerequisites for this module to work. Please download and install from here: https://graphviz.org/download/ and re-run this command." -ErrorAction Stop
-            }
-            else {
-                $dot_file = (Join-Path ([System.IO.Path]::GetTempPath()) "temp.dot")
+            $dot_file = New-TemporaryFile
+            try {
                 $graph | Out-String | Out-File $dot_file -Verbose:$false -Encoding ascii
-                if (Test-Path $dot_file) {
-                    if ($IsLinux) {
-                        Invoke-Expression "$($GraphViz.FullName) $dot_file"
-                    }
-                    else {
-                        & $GraphViz.FullName $dot_file
-                    }
-
-                    Remove-Item $dot_file -Force
-                }
-                else {
-                    $graph | Out-String 
-                }
+                Invoke-DOTExecutable -GraphViz $GraphViz.FullName -Path $dot_file.FullName
+            }
+            finally {
+                Remove-Item $dot_file -Force -ErrorAction SilentlyContinue
             }
 
         }

@@ -47,7 +47,7 @@ function ConvertFrom-Network {
             switch ($TargetType) {
                 'Azure Resource Group' { 
                     $ResourceGroup = $Target
-                    Write-CustomHost "Exporting network associations for resource group: `'$Target`'" -Indentation 1 -color Green
+                    Write-CustomHost "Exporting network associations for resource group: `'$Target`'" -Indentation 1
                     $location = Get-AzResourceGroup -Name $ResourceGroup -Verbose:$false | ForEach-Object location
                     $networkWatcher = Get-AzNetworkWatcher -Location $location -ErrorAction SilentlyContinue -Verbose:$false
                 }
@@ -60,10 +60,10 @@ function ConvertFrom-Network {
             }
 
             if ($networkWatcher) {
-                Write-CustomHost "Network watcher found: `'$($networkWatcher.Name)`'" -Indentation 2 -color Green
+                Write-CustomHost "Network watcher found: `'$($networkWatcher.Name)`'" -Indentation 2
 
                 #region obtaining-network-associations           
-                Write-CustomHost "Obtaining network topology using Network Watcher" -Indentation 2 -color Green
+                Write-CustomHost "Obtaining network topology using Network Watcher" -Indentation 2
                 $Topology = Get-AzNetworkWatcherTopology -NetworkWatcher $networkWatcher -TargetResourceGroupName $ResourceGroup -Verbose:$false 
                 
                 $resources = $Topology.Resources #| Where-Object $scriptblock
@@ -77,7 +77,7 @@ function ConvertFrom-Network {
                               @{n = 'fromcateg'; e = { (Get-AzResource -ResourceId $_.id -ea SilentlyContinue -Verbose:$false).ResourceType } },
                               Associations,
                               @{n = 'to'; e = { ($_.AssociationText | ConvertFrom-Json) | Select-Object name, AssociationType, resourceID } } |
-                Select-Object *, @{n='CategDepth';e={$depth=0;try{$depth=$_.fromcateg.split("/").count}catch{};$depth}} | #todo just a hack will write better code later :)
+                Select-Object *, @{n='CategDepth';e={ if ($_.fromcateg) { $_.fromcateg.split("/").count } else { 0 } }} |
                 Where-Object { $_.fromcateg -and ($_.CategDepth -le $($CategoryDepth + 1)) } -ea silentlycontinue |
                 ForEach-Object {
                     if ($_.to) {
@@ -98,10 +98,10 @@ function ConvertFrom-Network {
                             }
                             else{
                                 if($SkipMsgFlag){
-                                    Write-CustomHost "Skipping network resources outside the resource group '$ResourceGroup'" -Indentation 3 -color Yellow
+                                    Write-CustomHost "Skipping network resources outside the resource group '$ResourceGroup'" -Indentation 3
                                     $skipMsgFlag = $false
                                 }
-                                Write-CustomHost "$($to.ResourceID)" -Indentation 4 -color Yellow
+                                Write-CustomHost "$($to.ResourceID)" -Indentation 4
                             }
                         }
                     }
@@ -126,7 +126,7 @@ function ConvertFrom-Network {
                 }
             }
             else {
-                Write-CustomHost "Network watcher not found for resource group: `'$ResourceGroup`'" -Indentation 2 -Color Yellow
+                Write-CustomHost "Network watcher not found for resource group: `'$ResourceGroup`'" -Indentation 2
             }
  
             #endregion parsing-network-topology-and-finding-associations

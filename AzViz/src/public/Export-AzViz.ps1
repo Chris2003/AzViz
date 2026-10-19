@@ -70,6 +70,7 @@ Author    : https://www.linkedin.com/in/prateeksingh1590
 #>
 function Export-AzViz {
     [CmdletBinding()]
+    [Alias('AzViz')]
     param (
         # Names of target resource groups 
         [Parameter(ParameterSetName = 'AzLogin', Mandatory = $true, Position = 0)]
@@ -149,79 +150,19 @@ function Export-AzViz {
 
     try {
 
-        $StartTime =  [datetime]::Now
+        $script:AzVizStartTime = [datetime]::Now
 
         #region defaults
         $ErrorActionPreference = 'stop'
 
-        Get-ASCIIArt             
+        Get-ASCIIArt
 
-        Write-Host ""
-        Write-CustomHost "Testing Graphviz installation..." -Indentation 0 -color Magenta -AddTime
+        Write-CustomHost "Testing Graphviz installation..." -Indentation 0 -AddTime
 
         # test graphviz installation
 
         $GraphViz = Get-DOTExecutable
-
-        if ( $null -eq $GraphViz ) {
-            Write-Error "'GraphViz' is not installed on this system and is a prerequisites for this module to work. Please download and install from here: https://graphviz.org/download/ and re-run this command." -ErrorAction Stop
-        }
-        else {
-            Write-CustomHost "GraphViz installation path : $GraphViz" -Indentation 1 -color Green
-        }
-
-        switch ($Theme) {
-            'light' { 
-                $VisualizationGraphColor = 'White'
-                $MainGraphBGColor = 'ivory1'
-                $ResourceGroupGraphColor = 'black'
-                $ResourceGroupGraphBGColor = 'ghostwhite'
-                $VNetGraphColor = 'mintcream'
-                $SubnetGraphBGColor = 'whitesmoke'
-                $SubnetGraphColor = 'black'
-                $GraphFontColor = 'black'
-                $DependencyEdgeColor = 'lightslategrey'
-                $NetworkEdgeColor = 'royalblue2'
-                $EdgeFontColor = 'black'
-                $NodeColor = 'black'
-                $NodeFontColor = 'black'
-                break
-            }
-            'dark' { 
-                $VisualizationGraphColor = 'White'
-                $MainGraphBGColor = 'Black'
-                $ResourceGroupGraphColor = 'white'
-                $ResourceGroupGraphBGColor = 'grey7'
-                $VNetGraphColor = 'white'
-                $VNetGraphBGColor = 'grey15'
-                $SubnetGraphColor = 'white'
-                $SubnetGraphBGColor = 'grey23'
-                $GraphFontColor = 'white'
-                $DependencyEdgeColor = 'lightslategrey'
-                $NetworkEdgeColor = 'royalblue2'
-                $EdgeFontColor = 'white'
-                $NodeColor = 'white'
-                $NodeFontColor = 'white'
-                break
-            }
-            'neon' {
-                $VisualizationGraphColor = 'White'
-                $MainGraphBGColor = 'grey14'
-                $ResourceGroupGraphColor = 'white'
-                $ResourceGroupGraphBGColor = 'midnightblue'
-                $VNetGraphColor = 'white'
-                $VNetGraphBGColor = 'darkslategray'
-                $SubnetGraphColor = 'white'
-                $SubnetGraphBGColor = 'maroon4'
-                $GraphFontColor = 'gold2'
-                $DependencyEdgeColor = 'olivedrab1'
-                $NetworkEdgeColor = 'lightpink2'
-                $EdgeFontColor = 'gold2'
-                $NodeColor = 'gold2'
-                $NodeFontColor = 'gold2'
-                break
-            }
-        }
+        Write-CustomHost "GraphViz installation path : $GraphViz" -Indentation 1
 
         if ($PSBoundParameters.ContainsKey('ResourceGroup')) {
             $TargetType = 'Azure Resource Group'
@@ -233,25 +174,16 @@ function Export-AzViz {
             $TargetType = 'URL'
         }
 
-        $rank = @{
-            "Microsoft.Network/publicIPAddresses"     = 1
-            "Microsoft.Network/loadBalancers"         = 2
-            "Microsoft.Network/virtualNetworks"       = 3 
-            "Microsoft.Network/networkSecurityGroups" = 4
-            "Microsoft.Network/networkInterfaces"     = 5
-            "Microsoft.Compute/virtualMachines"       = 6
-        }
-
-        Write-CustomHost "Configuring Defaults..." -Indentation 0 -color Magenta -AddTime
-        Write-CustomHost " Target Type            : $TargetType"-Indentation 1 -color Green
-        Write-CustomHost " Output Format          : $OutputFormat"-Indentation 1 -color Green
-        Write-CustomHost " Exluded Resource Types : $($ExcludeTypes.foreach({"`'$_`'"}))"-Indentation 1 -color Green
-        Write-CustomHost " Output File Path       : $OutputFilePath"-Indentation 1 -color Green
-        Write-CustomHost " Label Verbosity        : $LabelVerbosity"-Indentation 1 -color Green
-        Write-CustomHost " Category Depth         : $CategoryDepth"-Indentation 1 -color Green
-        Write-CustomHost " Sub-graph Direction    : $Direction"-Indentation 1 -color Green
-        Write-CustomHost " Theme                  : $Theme"-Indentation 1 -color Green
-        Write-CustomHost " Launch Visualization   : $Show"-Indentation 1 -color Green
+        Write-CustomHost "Configuring Defaults..." -Indentation 0 -AddTime
+        Write-CustomHost " Target Type            : $TargetType"-Indentation 1
+        Write-CustomHost " Output Format          : $OutputFormat"-Indentation 1
+        Write-CustomHost " Exluded Resource Types : $($ExcludeTypes.foreach({"`'$_`'"}))"-Indentation 1
+        Write-CustomHost " Output File Path       : $OutputFilePath"-Indentation 1
+        Write-CustomHost " Label Verbosity        : $LabelVerbosity"-Indentation 1
+        Write-CustomHost " Category Depth         : $CategoryDepth"-Indentation 1
+        Write-CustomHost " Sub-graph Direction    : $Direction"-Indentation 1
+        Write-CustomHost " Theme                  : $Theme"-Indentation 1
+        Write-CustomHost " Launch Visualization   : $Show"-Indentation 1
         
         switch ($TargetType) {
             'Azure Resource Group' { $Targets = $ResourceGroup }
@@ -259,28 +191,26 @@ function Export-AzViz {
             'Url' { $Targets = $url }
         }
           
-        Write-CustomHost "Target ${TargetType}s... " -Indentation 0 -color Magenta -AddTime
-        $Targets.ForEach( { Write-CustomHost $_ -Indentation 1 -color Green } ) 
+        Write-CustomHost "Target ${TargetType}s... " -Indentation 0 -AddTime
+        $Targets.ForEach( { Write-CustomHost $_ -Indentation 1 } ) 
         #endregion defaults
 
         #region graph-generation
-        Write-CustomHost "Starting to generate Azure visualization..." -Indentation 0 -color Magenta -AddTime
+        Write-CustomHost "Starting to generate Azure visualization..." -Indentation 0 -AddTime
     
-        $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Splines $Splines -ExcludeTypes $ExcludeTypes
+        $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Direction $Direction -Splines $Splines -ExcludeTypes $ExcludeTypes -Theme $Theme
 
         if ($graph) {
             @"
 strict $graph
 "@ | Export-PSGraph -GraphVizPath $GraphViz.FullName -ShowGraph:$Show -OutputFormat $OutputFormat -DestinationPath $OutputFilePath -OutVariable output |
             Out-Null
-            Write-CustomHost "Visualization exported to path: $($output.fullname)" -Indentation 0 -color Magenta -AddTime
-            Write-CustomHost "Finished Azure visualization." -Indentation 0 -color Magenta -AddTime
+            Write-CustomHost "Visualization exported to path: $($output.fullname)" -Indentation 0 -AddTime
+            Write-CustomHost "Finished Azure visualization." -Indentation 0 -AddTime
         }
         #endregion graph-generation
     }
     catch {
-        $_
+        $PSCmdlet.ThrowTerminatingError($_)
     }
 }
-
-Export-ModuleMember Export-AzViz

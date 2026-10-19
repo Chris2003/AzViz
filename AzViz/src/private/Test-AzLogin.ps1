@@ -1,37 +1,23 @@
 function Test-AzLogin {
     [CmdletBinding()]
     [OutputType([boolean])]
-    [Alias()]
-    Param()
+    param()
 
-    Begin {
+    # Never prompt: an interactive Connect-AzAccount would hang unattended runs.
+    $message = 'Not signed in to Azure. Run Connect-AzAccount (interactively, or with a service principal, ' +
+        'managed identity or federated token) before running AzViz.'
+
+    Write-Verbose 'Testing Azure login'
+    try {
+        $context = Get-AzContext -ErrorAction Stop
     }
-    Process {
-        # Verify we are signed into an Azure account
-        try {
-            try{
-                Import-Module Az.Accounts -Verbose:$false   
-            }
-            catch {}
-            Write-Verbose 'Testing Azure login'
-            $isLoggedIn = [bool](Get-AzContext -ErrorAction Stop)
-            if(!$isLoggedIn){                
-                Write-Verbose 'Not logged into Azure. Initiate login now.'
-                Write-Host 'Enter your credentials in the pop-up window' -ForegroundColor Yellow
-                $isLoggedIn = Connect-AzAccount
-            }
-        }
-        catch [System.Management.Automation.PSInvalidOperationException] {
-            Write-Verbose 'Not logged into Azure. Initiate login now.'
-            Write-Host 'Enter your credentials in the pop-up window' -ForegroundColor Yellow
-            $isLoggedIn = Connect-AzAccount
-        }
-        catch {
-            Throw $_.Exception.Message
-        }
-        [bool]$isLoggedIn
+    catch {
+        throw "$message $($_.Exception.Message)"
     }
-    End {
-        
+
+    if (-not $context) {
+        throw $message
     }
+
+    $true
 }

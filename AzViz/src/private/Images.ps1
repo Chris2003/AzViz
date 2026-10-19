@@ -656,7 +656,7 @@ $Images = @{
 }
 #>
 
-$Images = @{
+$script:Images = @{
     "Subscriptions"                                                                              = "Subscriptions.png"
     "ResourceGroups"                                                                             = "ResourceGroups.png"
     "Subnets"                                                                                    = "subnets.png"

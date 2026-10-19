@@ -2,7 +2,7 @@ function ConvertFrom-ARM {
     [CmdletBinding()]
     param (
         [string[]] $Targets,
-        [ValidateSet('Azure Resource Group')]
+        [ValidateSet('Azure Resource Group', 'File', 'Url')]
         [string] $TargetType = 'Azure Resource Group',
         [int] $CategoryDepth = 1,
         [string[]] $ExcludeTypes
@@ -46,41 +46,41 @@ function ConvertFrom-ARM {
         Foreach($Target in $Targets){
             
             $temp_armtemplate = New-TemporaryFile
-            # $temp_armtemplate = (Join-Path ([System.IO.Path]::GetTempPath()) "armtemplate.json")
-                
-            #region obtaining-arm-template
-            switch ($TargetType) {
-                'Azure Resource Group' { 
-                    Write-CustomHost "Exporting ARM template of Azure resource group: `'$Target`'" -Indentation 1 -color Green
-                    $template = (Export-AzResourceGroup -ResourceGroupName $Target -SkipAllParameterization -Force -Path $temp_armtemplate -WarningAction SilentlyContinue -Verbose:$false).Path
+            try {
+                #region obtaining-arm-template
+                switch ($TargetType) {
+                    'Azure Resource Group' {
+                        Write-CustomHost "Exporting ARM template of Azure resource group: `'$Target`'" -Indentation 1
+                        $template = (Export-AzResourceGroup -ResourceGroupName $Target -SkipAllParameterization -Force -Path $temp_armtemplate -WarningAction SilentlyContinue -Verbose:$false).Path
+                    }
+                    'File' {
+                        Write-CustomHost "Accessing ARM template from local file: `'$Target`'" -Indentation 2
+                        $template = $Target
+                    }
+                    'Url' {
+                        Write-CustomHost "Downloading ARM template from URL: `'$Target`'" -Indentation 2
+                        $template = $temp_armtemplate
+                        Invoke-WebRequest -Uri $Target -OutFile $template -Verbose:$false
+                    }
                 }
-                'File' { 
-                    Write-CustomHost "Accessing ARM template from local file: `'$Target`'" -Indentation 2 -color Green
-                    $template = $Target
-                }
-                'Url' {
-                    Write-CustomHost "Downloading ARM template from URL: `'$Target`'" -Indentation 2 -color Green
-                    # $Target = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-linux/azuredeploy.json'
-                    $template = $temp_armtemplate
-                    Invoke-WebRequest -Uri  $Target -OutFile $template  -Verbose:$false
-                    # todo test-path the downloaded file
-                }
+
+                Write-CustomHost "Processing the ARM template to extract resources" -Indentation 2
+
+                $arm = Get-Content -Path $template -Raw | ConvertFrom-Json
+                $resources = $arm.Resources | Where-Object $scriptblock
             }
-
-            Write-CustomHost "Processing the ARM template to extract resources" -Indentation 2 -color Green
-
-            $arm = Get-Content -Path $template | ConvertFrom-Json
-            $resources = $arm.Resources | Where-Object $scriptblock
+            finally {
+                # Only the temporary file is ever removed; a user's template is left untouched.
+                Write-CustomHost "Cleaning up temporary ARM template file at: $temp_armtemplate" -Indentation 2
+                Remove-Item $temp_armtemplate -Force -ErrorAction SilentlyContinue
+            }
 
             if ($resources) {
-                Write-CustomHost "Total resources found: $($resources.count)"  -Indentation 2 -color Green
-                Write-CustomHost "Cleaning up temporary ARM template file at: $template"  -Indentation 2 -color Green
-                Remove-Item $template -Force
+                Write-CustomHost "Total resources found: $($resources.count)" -Indentation 2
             }
             else {
-                Write-CustomHost "Total resources/sub-resources found: $($resources.count)"  -Indentation 2 -color Green
-                Write-CustomHost "Skipping ${TargetType}: `"$Target`" as no resources were found."  -Indentation 2 -color Green
-                continue        
+                Write-CustomHost "Skipping ${TargetType}: `"$Target`" as no resources were found." -Indentation 2
+                continue
             }
             #endregion obtaining-arm-template
 

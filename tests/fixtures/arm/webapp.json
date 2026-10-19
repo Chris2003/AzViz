@@ -1,0 +1,41 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2023-12-01",
+            "name": "plan-fixture01",
+            "location": "westus2"
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2023-12-01",
+            "name": "app-fixture01",
+            "location": "westus2",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', 'plan-fixture01')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2023-05-01",
+            "name": "stfixture01",
+            "location": "westus2"
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts/blobServices",
+            "apiVersion": "2023-05-01",
+            "name": "stfixture01/default",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', 'stfixture01')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2023-11-01",
+            "name": "vnet-fixture01",
+            "location": "westus2"
+        }
+    ]
+}

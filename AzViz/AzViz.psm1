@@ -1,4 +1,3 @@
-$ProjectRoot = (Get-location).Path
 $Path = (Join-Path $PSScriptRoot 'src')
 Get-Childitem $Path -Filter *.ps1 -Recurse | Foreach-Object {
     . $_.Fullname

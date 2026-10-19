@@ -3,11 +3,7 @@ Function Get-ImageNode {
     param(
         [string[]]$Rows,
         [string]$Type,
-        [String]$Name,
-        [String]$Label,
-        [String]$Style = 'Filled',
-        [String]$Shape = 'none',
-        [String]$FillColor = 'White'
+        [String]$Name
     )
 
     # Write-host "NAME: $Name, ROWS: $Rows, TYPE: $Type" -ForegroundColor Magenta
@@ -28,12 +24,12 @@ Function Get-ImageNode {
         }
     }
 
-    $Path = $images[$Type]
+    $Path = $script:Images[$Type]
     if ($Path) {
-        '"{0}" [label=<<TABLE border="0" cellborder="0" cellpadding="0"><TR><TD ALIGN="center" colspan="2"><img src="{1}"/></TD></TR>{2}</TABLE>>;fillcolor="white";shape="none";penwidth="1";fontname="Courier New";]' -f $Name, $(Join-Path $IconPath $images[$Type]), $TR
+        '"{0}" [label=<<TABLE border="0" cellborder="0" cellpadding="0"><TR><TD ALIGN="center" colspan="2"><img src="{1}"/></TD></TR>{2}</TABLE>>;fillcolor="white";shape="none";penwidth="1";fontname="Courier New";]' -f $Name, $(Join-Path $IconPath $script:Images[$Type]), $TR
     }
     else {
-        '"{0}" [label=<<TABLE border="0" cellborder="0" cellpadding="0"><TR><TD ALIGN="center" colspan="2"><img src="{1}"/></TD></TR>{2}</TABLE>>;fillcolor="white";shape="none";penwidth="1";fontname="Courier New";]' -f $Name, $(Join-Path $IconPath $images["resources"]), $TR
+        '"{0}" [label=<<TABLE border="0" cellborder="0" cellpadding="0"><TR><TD ALIGN="center" colspan="2"><img src="{1}"/></TD></TR>{2}</TABLE>>;fillcolor="white";shape="none";penwidth="1";fontname="Courier New";]' -f $Name, $(Join-Path $IconPath $script:Images["resources"]), $TR
     }
 
 }
