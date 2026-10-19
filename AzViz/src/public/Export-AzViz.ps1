@@ -198,7 +198,7 @@ function Export-AzViz {
         #region graph-generation
         Write-CustomHost "Starting to generate Azure visualization..." -Indentation 0 -AddTime
     
-        $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Splines $Splines -ExcludeTypes $ExcludeTypes -Theme $Theme
+        $graph = ConvertTo-DOTLanguage -TargetType $TargetType -Targets $Targets -CategoryDepth $CategoryDepth -LabelVerbosity $LabelVerbosity -Direction $Direction -Splines $Splines -ExcludeTypes $ExcludeTypes -Theme $Theme
 
         if ($graph) {
             @"
