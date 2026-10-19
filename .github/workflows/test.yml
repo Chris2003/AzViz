@@ -9,16 +9,28 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pester:
-    name: Pester (${{ matrix.os }})
+    name: Pester (${{ matrix.os }}, pwsh ${{ matrix.pwsh }})
     strategy:
       fail-fast: false
       matrix:
         os: [ windows-latest, ubuntu-latest, macos-latest ]
+        pwsh: [ runner ]
+        include:
+          # Minimum supported version, installed from a checksum-verified release tarball.
+          - os: ubuntu-latest
+            pwsh: '7.4.21'
+            pwsh-sha256: 3fc5e1567c450bd7bd5ae69ebb0a9a4a4e0418bbc36b0232cf6dd547f0bfc0eb
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Install dependencies (Windows)
       if: runner.os == 'Windows'
@@ -29,6 +41,18 @@ jobs:
       if: runner.os != 'Windows'
       run: sudo pwsh -NoProfile -File ./build/Install-Dependencies.ps1 -Scope AllUsers
 
+    - name: Install PowerShell ${{ matrix.pwsh }}
+      if: matrix.pwsh != 'runner'
+      env:
+        PWSH_VERSION: ${{ matrix.pwsh }}
+        PWSH_SHA256: ${{ matrix.pwsh-sha256 }}
+      run: |
+        curl -fsSL -o pwsh.tar.gz "https://github.com/PowerShell/PowerShell/releases/download/v${PWSH_VERSION}/powershell-${PWSH_VERSION}-linux-x64.tar.gz"
+        echo "${PWSH_SHA256}  pwsh.tar.gz" | sha256sum --check
+        mkdir -p "$RUNNER_TEMP/pwsh" && tar -xzf pwsh.tar.gz -C "$RUNNER_TEMP/pwsh" && rm pwsh.tar.gz
+        chmod +x "$RUNNER_TEMP/pwsh/pwsh"
+        echo "$RUNNER_TEMP/pwsh" >> "$GITHUB_PATH"
+
     - name: Run Pester
       shell: pwsh
       run: |
@@ -37,7 +61,28 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
-        name: test-results-${{ matrix.os }}
+        name: test-results-${{ matrix.os }}-${{ matrix.pwsh }}
         path: testResults.xml
+
+  publish-dry-run:
+    name: Publish dry run
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
+
+    - name: Install dependencies
+      run: sudo pwsh -NoProfile -File ./build/Install-Dependencies.ps1 -Scope AllUsers
+
+    - name: Dry-run publish with PSResourceGet
+      shell: pwsh
+      run: ./build/Publish-Module.ps1 -DryRun
+
+    - name: Upload package
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: AzViz-nupkg
+        path: out/*.nupkg
